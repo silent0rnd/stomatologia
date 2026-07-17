@@ -705,7 +705,9 @@ ol {
 
 .doctor-photo {
   position: relative;
+  width: calc(100% + 56px);
   min-height: 650px;
+  margin-left: -56px;
   overflow: hidden;
   border-radius: 46% var(--radius-card) var(--radius-card) 46% / 34% var(--radius-card) var(--radius-card) 42%;
   background: #dbe8e7;
@@ -714,7 +716,7 @@ ol {
 .doctor-photo img {
   position: absolute;
   inset: auto 0 0;
-  width: 100%;
+  width: calc(100% - 56px);
   height: 96%;
   object-fit: contain;
   object-position: center bottom;
@@ -884,16 +886,9 @@ ol {
   box-shadow: var(--shadow-card);
 }
 
-.clinical-case + .clinical-case {
-  margin-top: 28px;
-}
-
-.clinical-case-reverse .case-copy {
-  order: 2;
-}
-
-.clinical-case-reverse .before-after {
-  order: 1;
+.clinical-case--combined {
+  grid-template-columns: minmax(340px, 0.8fr) 1.2fr;
+  gap: 64px;
 }
 
 .case-copy h3 {
@@ -914,28 +909,17 @@ ol {
   font-size: 14px;
 }
 
-.before-after {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.before-after figure {
+.case-before-after {
   margin: 0;
 }
 
-.before-after img {
+.case-before-after img {
+  display: block;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 427 / 219;
   border-radius: 18px;
-  background: var(--color-background-alt);
-  object-fit: cover;
-}
-
-.before-after figcaption {
-  margin-top: 10px;
-  color: var(--color-brand-dark);
-  font-weight: 700;
+  background: var(--color-white);
+  object-fit: contain;
 }
 
 .price-section {
@@ -1525,6 +1509,15 @@ ol {
 }
 
 @media (max-width: 1120px) {
+  .doctor-photo {
+    width: calc(100% + 28px);
+    margin-left: -28px;
+  }
+
+  .doctor-photo img {
+    width: calc(100% - 28px);
+  }
+
   :root {
     --header-height: 74px;
   }
@@ -1723,6 +1716,15 @@ ol {
 }
 
 @media (max-width: 820px) {
+  .doctor-photo {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .doctor-photo img {
+    width: 100%;
+  }
+
   :root {
     --header-height: 68px;
   }
@@ -2009,17 +2011,8 @@ ol {
     padding: 24px;
   }
 
-  .clinical-case-reverse .case-copy,
-  .clinical-case-reverse .before-after {
-    order: initial;
-  }
-
   .case-copy h3 {
     font-size: 27px;
-  }
-
-  .before-after {
-    grid-template-columns: 1fr;
   }
 
   .price-grid,
