@@ -479,50 +479,7 @@ ol {
 
 .hero-visual img {
   object-fit: cover;
-  object-position: 64% center;
-}
-
-.hero-result-card {
-  position: absolute;
-  isolation: isolate;
-  right: 8%;
-  bottom: 25%;
-  display: flex;
-  min-width: 400px;
-  align-items: center;
-  gap: 18px;
-  padding: 22px 28px;
-  border: 1px solid rgba(255, 255, 255, 0.86);
-  border-radius: 16px;
-  background: #ffffff;
-  box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(12px);
-}
-
-.hero-result-card p {
-  margin: 0;
-  color: #303839;
-  font-size: 16px;
-}
-
-.spark {
-  position: relative;
-  width: 32px;
-  height: 32px;
-  flex: 0 0 auto;
-}
-
-.spark::before,
-.spark::after {
-  content: "";
-  position: absolute;
-  inset: 15px 0 auto;
-  height: 2px;
-  background: var(--color-brand);
-}
-
-.spark::after {
-  transform: rotate(90deg);
+  object-position: center;
 }
 
 .hero-wave {
@@ -591,10 +548,6 @@ ol {
 }
 
 .comparison-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 32px;
   margin-top: 32px;
 }
 
@@ -632,6 +585,9 @@ ol {
 }
 
 .info-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   min-height: 190px;
   padding: 25px;
   border: 1px solid var(--color-border);
@@ -653,21 +609,19 @@ ol {
   box-shadow: var(--shadow-card);
 }
 
-.info-card > span {
-  display: block;
-  margin-bottom: 22px;
-  color: var(--color-brand);
-  font-family: "Prata", Georgia, serif;
-  font-size: 25px;
-}
-
 .info-card h3 {
-  font-size: 18px;
+  width: 100%;
+  margin-bottom: 16px;
+  font-size: clamp(21px, 1.5vw, 26px);
+  line-height: 1.2;
 }
 
 .info-card p {
+  width: 100%;
   margin-bottom: 0;
-  font-size: 14px;
+  color: #516263;
+  font-size: 16px;
+  line-height: 1.5;
 }
 
 .full-row-layout {
@@ -874,9 +828,11 @@ ol {
 }
 
 .timeline::after {
-  width: calc((100% - 46px) * var(--timeline-progress, 0));
+  width: calc(80% + 20px);
   background: var(--color-brand);
-  transition: width 1200ms cubic-bezier(0.16, 1, 0.3, 1);
+  transform: scaleX(var(--timeline-progress, 0));
+  transform-origin: left center;
+  transition: transform 1200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .timeline li {
@@ -1117,6 +1073,9 @@ ol {
 }
 
 .guarantee-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
   min-height: 260px;
   padding: 30px;
   border: 1px solid var(--color-border);
@@ -1130,17 +1089,20 @@ ol {
   background: linear-gradient(145deg, var(--color-brand-light), #ffffff);
 }
 
-.guarantee-card span {
-  display: block;
-  margin-bottom: 46px;
-  color: var(--color-brand);
-  font-family: "Prata", Georgia, serif;
-  font-size: 44px;
+.guarantee-card h3 {
+  width: 100%;
+  min-height: 3.54em;
+  margin-bottom: 18px;
+  font-size: clamp(22px, 1.65vw, 28px);
+  line-height: 1.18;
 }
 
 .guarantee-card p {
+  width: 100%;
   margin-bottom: 0;
-  font-size: 14px;
+  color: #516263;
+  font-size: 16px;
+  line-height: 1.5;
 }
 
 .final-cta {
@@ -1268,6 +1230,53 @@ ol {
   padding-top: 54px;
   border-top: 1px solid var(--color-border);
   background: #f8faf9;
+}
+
+/* Мягкое перетекание фонов между соседними секциями. */
+.comparison-section {
+  background: linear-gradient(to bottom, var(--color-background) 0 calc(100% - 104px), var(--color-background-alt) 100%);
+}
+
+.technology-section {
+  background: linear-gradient(to bottom, var(--color-background-alt) 0 calc(100% - 104px), var(--color-background) 100%);
+}
+
+.full-row-section {
+  background: linear-gradient(to bottom, var(--color-background) 0 calc(100% - 104px), #f2f7f6 100%);
+}
+
+.doctor-section {
+  background:
+    linear-gradient(to bottom, transparent 0 calc(100% - 104px), var(--color-background-alt) 100%),
+    linear-gradient(115deg, #f2f7f6 0 48%, #ffffff 48% 100%);
+}
+
+.indications-section {
+  background: linear-gradient(to bottom, var(--color-background-alt) 0 calc(100% - 104px), var(--color-background) 100%);
+}
+
+.steps-section {
+  background: linear-gradient(to bottom, var(--color-background) 0 calc(100% - 104px), #f7faf9 100%);
+}
+
+.results-section {
+  background: linear-gradient(to bottom, #f7faf9 0 calc(100% - 104px), var(--color-background-warm) 100%);
+}
+
+.price-section {
+  background: linear-gradient(to bottom, var(--color-background-warm) 0 calc(100% - 104px), var(--color-background) 100%);
+}
+
+.guarantees-section {
+  background: linear-gradient(to bottom, var(--color-background) 0 calc(100% - 104px), var(--color-background-alt) 100%);
+}
+
+.final-cta {
+  background: linear-gradient(to bottom, var(--color-background-alt) 0 calc(100% - 104px), var(--color-background) 100%);
+}
+
+.contacts-section {
+  background: linear-gradient(to bottom, var(--color-background) 0 calc(100% - 104px), #f8faf9 100%);
 }
 
 .footer-grid {
@@ -1663,13 +1672,6 @@ ol {
     height: 38px;
   }
 
-  .hero-result-card {
-    right: 6%;
-    bottom: 25%;
-    min-width: 290px;
-    padding: 18px;
-  }
-
   .technology-grid,
   .doctor-grid,
   .full-row-layout {
@@ -1830,31 +1832,6 @@ ol {
     border-radius: 45% 0 0 0 / 22% 0 0 0;
   }
 
-  .hero-visual img {
-    object-position: 63% center;
-  }
-
-  .hero-result-card {
-    right: 18px;
-    bottom: 25%;
-    min-width: 0;
-    padding: 14px 16px;
-  }
-
-  .hero-result-card p {
-    font-size: 13px;
-  }
-
-  .spark {
-    width: 24px;
-    height: 24px;
-  }
-
-  .spark::before,
-  .spark::after {
-    top: 11px;
-  }
-
   .hero-wave {
     display: none;
   }
@@ -1928,16 +1905,9 @@ ol {
     border-radius: 12px;
   }
 
-  .comparison-footer,
   .section-action {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .comparison-footer .button,
-  .section-action .button {
-    width: 100%;
-    white-space: normal;
   }
 
   .technology-grid,
@@ -2016,8 +1986,10 @@ ol {
 
   .timeline::after {
     width: 2px;
-    height: calc((100% - 46px) * var(--timeline-progress, 0));
-    transition: height 1200ms cubic-bezier(0.16, 1, 0.3, 1);
+    height: calc(100% - 46px);
+    transform: scaleY(var(--timeline-progress, 0));
+    transform-origin: center top;
+    transition: transform 1200ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .timeline li {
@@ -2087,6 +2059,10 @@ ol {
 
   .guarantee-card {
     min-height: 220px;
+  }
+
+  .guarantee-card h3 {
+    min-height: auto;
   }
 
   .final-cta {
@@ -2228,7 +2204,6 @@ ol {
 @media (prefers-reduced-transparency: reduce) {
   .site-header,
   .mobile-menu,
-  .hero-result-card,
   .modal-backdrop {
     backdrop-filter: none;
   }
