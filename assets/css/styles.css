@@ -670,26 +670,20 @@ ol {
   position: relative;
   display: flex;
   min-height: 430px;
+  padding: 22px;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-radius: 52% 48% 46% 54% / 44% 38% 62% 56%;
-  background: radial-gradient(circle at 50% 42%, #ffffff 0 24%, #e8f2f1 72%);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: linear-gradient(145deg, #ffffff 0%, #f5faf9 100%);
+  box-shadow: var(--shadow-card);
 }
 
 .full-row-visual img {
-  position: relative;
-  z-index: 2;
-  width: 78%;
-  border-radius: 18px;
-  box-shadow: var(--shadow-soft);
-}
-
-.arch-line {
-  position: absolute;
-  inset: 36px;
-  border: 1px solid rgba(6, 89, 95, 0.24);
-  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .doctor-section {
@@ -705,9 +699,7 @@ ol {
 
 .doctor-photo {
   position: relative;
-  width: calc(100% + 56px);
   min-height: 650px;
-  margin-left: -56px;
   overflow: hidden;
   border-radius: 46% var(--radius-card) var(--radius-card) 46% / 34% var(--radius-card) var(--radius-card) 42%;
   background: #dbe8e7;
@@ -716,7 +708,7 @@ ol {
 .doctor-photo img {
   position: absolute;
   inset: auto 0 0;
-  width: calc(100% - 56px);
+  width: 100%;
   height: 96%;
   object-fit: contain;
   object-position: center bottom;
@@ -867,11 +859,6 @@ ol {
 
 .results-section {
   background: #f7faf9;
-}
-
-.materials-note {
-  color: #707a7b;
-  font-size: 14px !important;
 }
 
 .clinical-case {
@@ -1509,15 +1496,6 @@ ol {
 }
 
 @media (max-width: 1120px) {
-  .doctor-photo {
-    width: calc(100% + 28px);
-    margin-left: -28px;
-  }
-
-  .doctor-photo img {
-    width: calc(100% - 28px);
-  }
-
   :root {
     --header-height: 74px;
   }
@@ -1716,15 +1694,6 @@ ol {
 }
 
 @media (max-width: 820px) {
-  .doctor-photo {
-    width: 100%;
-    margin-left: 0;
-  }
-
-  .doctor-photo img {
-    width: 100%;
-  }
-
   :root {
     --header-height: 68px;
   }
