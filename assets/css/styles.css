@@ -1278,6 +1278,27 @@ ol {
   font-size: 12px;
 }
 
+.site-author {
+  padding: 14px 24px 16px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+.site-author a {
+  color: inherit;
+  text-decoration-color: rgba(74, 83, 84, 0.35);
+  text-underline-offset: 3px;
+  transition: color 180ms ease, text-decoration-color 180ms ease;
+}
+
+.site-author a:hover,
+.site-author a:focus-visible {
+  color: var(--color-accent);
+  text-decoration-color: currentColor;
+}
+
 .medical-notice {
   padding: 18px 24px;
   color: #4a5354;
