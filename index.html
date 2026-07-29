@@ -104,10 +104,10 @@
           </ul>
         </div>
 
-        <div class="hero-visual" aria-label="Пациентка на консультации у стоматолога">
+        <div class="hero-visual organic-frame organic-frame--hero">
           <picture>
             <source srcset="assets/images/hero-consultation-900.webp 900w, assets/images/hero-consultation-1322.webp 1322w" sizes="(max-width: 767px) 100vw, 58vw" type="image/webp">
-            <img src="assets/images/hero-consultation-1322.webp" width="1322" height="1190" alt="Женщина обсуждает лечение со стоматологом" fetchpriority="high">
+            <img src="assets/images/hero-consultation-1322.webp" width="1322" height="1190" alt="Женщина обсуждает лечение со стоматологом" fetchpriority="high" draggable="false">
           </picture>
         </div>
       </div>
@@ -174,8 +174,8 @@
         </div>
 
         <div class="technology-grid">
-          <figure class="technology-visual reveal">
-            <img src="assets/images/jaw-model.webp" width="1521" height="1050" alt="Медицинская модель челюсти с имплантами" loading="lazy">
+          <figure class="technology-visual organic-frame reveal">
+            <img src="assets/images/jaw-3d.webp" width="1680" height="908" alt="Титановые импланты, которые применяются в протоколе TiS" loading="lazy" draggable="false">
           </figure>
           <div class="technology-cards">
             <article class="info-card reveal"><h3>От 3 до 6 имплантов</h3><p>Количество имплантов определяется индивидуально с учётом клинической ситуации.</p></article>
@@ -200,16 +200,16 @@
             <li>Индивидуальный анатомический протез</li>
           </ul>
         </div>
-        <div class="full-row-visual reveal">
-          <img src="assets/images/jaw-full-implants.webp" width="1448" height="1086" alt="Полный зубной ряд на имплантах" loading="lazy">
+        <div class="full-row-visual organic-frame organic-frame--r reveal" data-parallax>
+          <img src="assets/images/patient-story.webp" width="1311" height="789" alt="Пациентка после восстановления полного зубного ряда" loading="lazy" draggable="false">
         </div>
       </div>
     </section>
 
     <section class="section doctor-section" id="doctor" aria-labelledby="doctor-title">
       <div class="container doctor-grid">
-        <div class="doctor-photo reveal">
-          <img src="assets/images/doctor-main-centered.webp" width="1002" height="990" alt="Крушев Александр Леонидович, главный врач Tetradent" loading="lazy">
+        <div class="doctor-photo organic-frame reveal">
+          <img src="assets/images/doctor-main-centered.webp" width="1002" height="990" alt="Крушев Александр Леонидович, главный врач Tetradent" loading="lazy" draggable="false">
         </div>
         <div class="doctor-copy reveal">
           <p class="section-label">Автор технологии TiS</p>
@@ -274,8 +274,20 @@
             <h3>Имплантация без костной пластики и протез в день операции</h3>
             <ul class="case-facts"><li>Без костной пластики</li><li>Сохранены родные зубы</li><li>Система на пяти имплантах</li><li>Протез установлен в день операции</li></ul>
           </div>
-          <figure class="case-before-after">
-            <img src="assets/images/case-before-after-user.webp" width="854" height="438" alt="Состояние зубов до и после восстановления" loading="lazy">
+          <figure class="case-before-after" data-compare>
+            <div class="ba-frame organic-frame organic-frame--w">
+              <div class="ba-layer ba-layer--after">
+                <img src="assets/images/case-before-after-user.webp" width="854" height="438" alt="Улыбка пациента после восстановления полного зубного ряда" loading="lazy" draggable="false">
+              </div>
+              <div class="ba-layer ba-layer--before" aria-hidden="true">
+                <img src="assets/images/case-before-after-user.webp" width="854" height="438" alt="" loading="lazy" draggable="false">
+              </div>
+              <span class="ba-tag ba-tag--before" aria-hidden="true">До</span>
+              <span class="ba-tag ba-tag--after" aria-hidden="true">После</span>
+              <span class="ba-handle" aria-hidden="true"></span>
+              <input class="ba-range" type="range" min="0" max="100" step="1" value="50" aria-label="Сравнение результата лечения: перетащите, чтобы увидеть состояние до и после">
+            </div>
+            <figcaption class="visually-hidden">Слева - состояние зубов до лечения, справа - результат по протоколу TiS.</figcaption>
           </figure>
         </article>
       </div>
@@ -354,8 +366,8 @@
               <button class="button js-open-modal" type="button">Записаться</button>
             </div>
           </div>
-          <figure class="entrance-photo reveal">
-            <img src="assets/images/case-wide-2.webp" width="1773" height="1053" alt="Вход в стоматологическую клинику Tetradent" loading="lazy">
+          <figure class="entrance-photo organic-frame organic-frame--r reveal" data-parallax>
+            <img src="assets/images/case-wide-2.webp" width="1773" height="1053" alt="Вход в стоматологическую клинику Tetradent" loading="lazy" draggable="false">
           </figure>
         </div>
         <div class="map-wrap reveal">

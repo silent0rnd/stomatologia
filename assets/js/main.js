@@ -259,20 +259,161 @@ if ("IntersectionObserver" in window) {
   );
 
   revealElements.forEach((element) => revealObserver.observe(element));
-
-  const timeline = document.querySelector("[data-timeline]");
-  if (timeline) {
-    const timelineObserver = new IntersectionObserver(
-      ([entry], observer) => {
-        if (!entry.isIntersecting) return;
-        timeline.style.setProperty("--timeline-progress", "1");
-        observer.unobserve(timeline);
-      },
-      { threshold: 0.25 }
-    );
-    timelineObserver.observe(timeline);
-  }
 } else {
   document.querySelectorAll(".reveal").forEach((element) => element.classList.add("is-visible"));
-  document.querySelector("[data-timeline]")?.style.setProperty("--timeline-progress", "1");
+}
+
+/* Один общий цикл на всё, что зависит от прокрутки: один пассивный слушатель и
+   один requestAnimationFrame на кадр, сколько бы подписчиков ни было. */
+const scrollTasks = [];
+let scrollTicking = false;
+
+function runScrollTasks() {
+  scrollTicking = false;
+  for (const task of scrollTasks) task();
+}
+
+function watchScroll(task) {
+  scrollTasks.push(task);
+  if (scrollTasks.length === 1) {
+    const schedule = () => {
+      if (scrollTicking) return;
+      scrollTicking = true;
+      requestAnimationFrame(runScrollTasks);
+    };
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule, { passive: true });
+  }
+  task();
+}
+
+/* Подсветка текущего пункта меню. Переиспользует подчёркивание из :hover. */
+if ("IntersectionObserver" in window) {
+  const navLinks = new Map(
+    [...document.querySelectorAll(".desktop-nav a[href^='#']")].map((link) => [
+      link.getAttribute("href").slice(1),
+      link,
+    ])
+  );
+
+  if (navLinks.size) {
+    const navObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          navLinks.get(entry.target.id)?.toggleAttribute("data-current", entry.isIntersecting);
+        });
+      },
+      { rootMargin: "-45% 0px -50% 0px" }
+    );
+
+    navLinks.forEach((_, id) => {
+      const section = document.getElementById(id);
+      if (section) navObserver.observe(section);
+    });
+  }
+}
+
+/* Параллакс: если браузер умеет scroll-driven анимации, всё уже сделано в CSS.
+   Иначе - один общий цикл поверх watchScroll, только transform, без layout. */
+if (!CSS.supports("animation-timeline", "view()") && !reduceMotion) {
+  const parallaxImages = [...document.querySelectorAll(".organic-frame[data-parallax] img")];
+  if (parallaxImages.length) {
+    watchScroll(() => {
+      const viewport = window.innerHeight;
+      for (const image of parallaxImages) {
+        const rect = image.parentElement.getBoundingClientRect();
+        if (rect.bottom < -200 || rect.top > viewport + 200) continue;
+        const centered = (rect.top + rect.height / 2 - viewport / 2) / (viewport / 2 + rect.height / 2);
+        image.style.transform = `scale(1.09) translateY(${(centered * 3.2).toFixed(2)}%)`;
+      }
+    });
+  }
+}
+
+/* Счётчики в блоке врача. Разметка в HTML остаётся с настоящими значениями, поэтому
+   без JS и под reduced-motion всё читается как есть. Скринридер тоже всегда слышит
+   исходный текст: анимируемый span помечен aria-hidden, рядом лежит скрытая копия. */
+const doctorFacts = document.querySelectorAll(".doctor-facts dt");
+if (doctorFacts.length && "IntersectionObserver" in window && !reduceMotion) {
+  const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+  const countUp = (dt) => {
+    const original = dt.textContent.trim();
+    // \s в JS покрывает и обычный, и неразрывный, и узкий пробел - разряды ловятся все.
+    const match = original.match(/[\d\s]*\d/);
+    if (!match) {
+      dt.classList.add("is-static");
+      return;
+    }
+
+    const raw = match[0];
+    const target = parseInt(raw.replace(/\D/g, ""), 10);
+    const grouped = /\s/.test(raw);
+    const prefix = original.slice(0, match.index);
+    const suffix = original.slice(match.index + raw.length);
+    const format = (value) =>
+      prefix + (grouped ? value.toLocaleString("ru-RU").replace(/\s/g, "\u00A0") : String(value)) + suffix;
+
+    const live = document.createElement("span");
+    live.setAttribute("aria-hidden", "true");
+    const readable = document.createElement("span");
+    readable.className = "visually-hidden";
+    readable.textContent = original;
+    dt.replaceChildren(live, readable);
+
+    const duration = 1000;
+    const started = performance.now();
+    const step = (now) => {
+      const t = Math.min(1, (now - started) / duration);
+      live.textContent = format(Math.round(target * easeOutCubic(t)));
+      if (t < 1) requestAnimationFrame(step);
+      else live.textContent = original;
+    };
+    requestAnimationFrame(step);
+  };
+
+  const factObserver = new IntersectionObserver(
+    (entries, observer) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        countUp(entry.target);
+        observer.unobserve(entry.target);
+      });
+    },
+    { threshold: 0.6 }
+  );
+
+  doctorFacts.forEach((dt) => factObserver.observe(dt));
+}
+
+/* Сравнение "до/после". Вся механика - на нативном range, JS только прокидывает
+   его значение в CSS-переменную шторки и озвучивает позицию скринридеру. */
+const compare = document.querySelector("[data-compare]");
+if (compare) {
+  const range = compare.querySelector(".ba-range");
+  const frame = compare.querySelector(".ba-frame");
+  const syncCompare = () => {
+    frame.style.setProperty("--ba", `${range.value}%`);
+    range.setAttribute("aria-valuetext", `Показано ${range.value}% снимка до лечения`);
+  };
+  range.addEventListener("input", syncCompare);
+  syncCompare();
+}
+
+/* Линия этапов заполняется непрерывно по мере прокрутки, а не одним рывком.
+   Длина хода - не меньше 45% экрана, иначе на десктопе, где список широкий и
+   низкий, вся заливка проскакивала бы за полтораста пикселей. */
+const timeline = document.querySelector("[data-timeline]");
+if (timeline) {
+  if (reduceMotion) {
+    timeline.style.setProperty("--timeline-progress", "1");
+  } else {
+    watchScroll(() => {
+      const rect = timeline.getBoundingClientRect();
+      const viewport = window.innerHeight;
+      const span = Math.max(rect.height, viewport * 0.45);
+      const progress = (viewport * 0.85 - rect.top) / span;
+      timeline.style.setProperty("--timeline-progress", Math.min(1, Math.max(0, progress)).toFixed(3));
+    });
+  }
 }

@@ -46,12 +46,26 @@
   --color-border: #dbe4e3;
   --color-white: #ffffff;
   --color-error: #a03934;
+  --color-accent: #a8834f;
   --shadow-soft: 0 22px 60px rgba(17, 74, 77, 0.09);
   --shadow-card: 0 14px 38px rgba(17, 74, 77, 0.07);
   --radius-card: 24px;
   --radius-button: 14px;
   --header-height: 82px;
   --container: 1280px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Семейство органических рамок: один язык, четыре среза.
+     Переопределяются целиком в медиазапросе 820px - см. флаттенинг там. */
+  --frame-l: 48% var(--radius-card) 40% var(--radius-card) / 58% var(--radius-card) 36% var(--radius-card);
+  --frame-r: var(--radius-card) 48% var(--radius-card) 40% / var(--radius-card) 58% var(--radius-card) 36%;
+  --frame-w: var(--radius-card) 26% var(--radius-card) 22% / var(--radius-card) 52% var(--radius-card) 44%;
+  --frame-hero: 52% 0 0 46% / 64% 0 0 40%;
+  --frame-ring: inset 0 0 0 1px rgba(6, 89, 95, 0.1);
+  --frame-vignette: inset 0 -80px 100px -70px rgba(6, 89, 95, 0.17);
+
+  /* Толщина мягкого перехода между фонами соседних секций. */
+  --sp-fade: 104px;
 }
 
 *,
@@ -62,7 +76,7 @@
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 92px;
+  scroll-padding-top: calc(var(--header-height) + 10px);
 }
 
 body {
@@ -253,6 +267,96 @@ ol {
   pointer-events: none;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Фирменная органическая рамка для всех фотографий сайта. */
+.organic-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--frame, var(--frame-l));
+  background: var(--frame-bg, var(--color-brand-light));
+  transform: translateZ(0);
+}
+
+.organic-frame--r {
+  --frame: var(--frame-r);
+}
+
+.organic-frame--w {
+  --frame: var(--frame-w);
+}
+
+.organic-frame--hero {
+  --frame: var(--frame-hero);
+}
+
+.organic-frame > img,
+.organic-frame > picture,
+.organic-frame > picture > img {
+  width: 100%;
+  height: 100%;
+}
+
+.organic-frame > img,
+.organic-frame > picture > img {
+  object-fit: var(--frame-fit, cover);
+  object-position: var(--frame-pos, center);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Лёгкий параллакс внутри маски. Основной путь - scroll-driven анимация, она
+   считается на композиторе и не требует JS; фолбэк для старых браузеров лежит в
+   main.js. Масштаб обязан превышать сдвиг (scale >= 1 + 2 * shift), иначе из-под
+   маски покажется фон рамки.
+   Обёртка prefers-reduced-motion здесь обязательна: глобальное
+   animation-duration: 0.01ms !important не гасит scroll-driven анимацию, у неё
+   попросту нет длительности. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .organic-frame[data-parallax] > img,
+    .organic-frame[data-parallax] > picture > img {
+      animation: frame-parallax linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+  }
+}
+
+@keyframes frame-parallax {
+  from {
+    transform: scale(var(--px-scale, 1.09)) translateY(calc(var(--px-shift, 3.2%) * -1));
+  }
+
+  to {
+    transform: scale(var(--px-scale, 1.09)) translateY(var(--px-shift, 3.2%));
+  }
+}
+
+/* Даёт глубину без второго силуэта и одновременно перехватывает наведение:
+   пока верхняя цель hit-test - этот слой, а не <img>, браузер не вешает на фото
+   свой чип поиска по картинке (Google Объектив / Визуальный поиск Edge).
+   Атрибут alt при этом остаётся в разметке. */
+.organic-frame::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: var(--frame-ring), var(--frame-vignette);
+}
+
 .site-header {
   position: fixed;
   inset: 0 0 auto;
@@ -319,8 +423,38 @@ ol {
 }
 
 .desktop-nav a:hover::after,
-.desktop-nav a:focus-visible::after {
+.desktop-nav a:focus-visible::after,
+.desktop-nav a[data-current]::after {
   transform: scaleX(1);
+}
+
+.desktop-nav a[data-current] {
+  color: var(--color-brand-dark);
+}
+
+/* Полоса прочитанного. Оставлена включённой и при prefers-reduced-motion: это
+   ориентир, привязанный к собственной прокрутке пользователя, а не самостоятельная
+   анимация. В браузерах без scroll-driven анимаций её просто нет. */
+@supports (animation-timeline: scroll()) {
+  .site-header::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--color-brand), var(--color-accent));
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: read-progress linear both;
+    animation-timeline: scroll(root block);
+  }
+}
+
+@keyframes read-progress {
+  to {
+    transform: scaleX(1);
+  }
 }
 
 .header-actions {
@@ -347,6 +481,24 @@ ol {
   background: linear-gradient(132deg, #ffffff 0%, #ffffff 48%, #f4f8f8 100%);
 }
 
+/* Тот же приём, что и в финальном CTA: плоская диагональная заливка получает
+   глубину за счёт мягких радиальных пятен в цвете бренда. */
+.hero::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(42% 52% at 12% 18%, rgba(6, 89, 95, 0.07), transparent 68%),
+    radial-gradient(50% 46% at 4% 96%, rgba(6, 89, 95, 0.05), transparent 66%);
+}
+
+/* Без position/z-index намеренно: иначе .hero-grid становится контекстом
+   наложения и запирает в себе .hero-content (z-index 4), после чего волна
+   .hero-wave (z-index 3) начинает перекрывать строку преимуществ.
+   Порядок внутри .hero должен оставаться плоским:
+   ::before (1) < .hero-visual (2) < .hero-wave (3) < .hero-content (4). */
 .hero-grid {
   display: grid;
   min-height: calc(100dvh - var(--header-height));
@@ -462,24 +614,10 @@ ol {
 }
 
 .hero-visual {
-  position: relative;
   z-index: 2;
   min-width: 0;
   margin-left: -32px;
-  overflow: hidden;
-  border-radius: 52% 0 0 46% / 64% 0 0 40%;
-  background: #eef3f2;
-}
-
-.hero-visual picture,
-.hero-visual img {
-  width: 100%;
-  height: 100%;
-}
-
-.hero-visual img {
-  object-fit: cover;
-  object-position: center;
+  --frame-bg: #eef3f2;
 }
 
 .hero-wave {
@@ -538,13 +676,69 @@ ol {
   font-size: 16px;
 }
 
-.comparison-table .tis-column {
-  background: var(--color-brand-light);
-}
-
 .comparison-table tbody tr:last-child th,
 .comparison-table tbody tr:last-child td {
   border-bottom: 0;
+}
+
+/* Колонка TiS читается как единый приподнятый блок, а не как пять подкрашенных
+   ячеек. table-layout: fixed и ширина 26% у первого столбца дают ровно 37% на
+   каждый из двух оставшихся, поэтому подложку можно позиционировать точно. */
+@media (min-width: 821px) {
+  .comparison-table-wrap {
+    position: relative;
+  }
+
+  .comparison-table-wrap::before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 37%;
+    border-radius: 0 var(--radius-card) var(--radius-card) 0;
+    background: linear-gradient(180deg, #e2f1ef, var(--color-brand-light));
+    box-shadow: -1px 0 0 rgba(6, 89, 95, 0.14), 0 18px 44px -28px rgba(6, 89, 95, 0.55);
+  }
+
+  .comparison-table {
+    position: relative;
+    z-index: 1;
+  }
+
+  .comparison-table thead th.tis-column {
+    color: var(--color-brand-dark);
+    font-weight: 700;
+  }
+
+  .comparison-table tbody tr:hover th,
+  .comparison-table tbody tr:hover td {
+    background-color: rgba(6, 89, 95, 0.028);
+  }
+
+  /* Галочка против прочерка делает вывод наглядным там, где обычная таблица
+     заставляет читателя сравнивать самому. */
+  .comparison-table tbody .tis-column::before {
+    content: "✓";
+    margin-right: 10px;
+    color: var(--color-brand);
+    font-weight: 800;
+  }
+
+  .comparison-table tbody td:not(.tis-column)::before {
+    content: "—";
+    margin-right: 10px;
+    color: #9aa6a6;
+  }
+}
+
+/* Ниже 821px таблица превращается в карточки, там ::before уже занят под
+   data-label, а сплошная подложка не нужна - подкрашиваем ячейку как раньше. */
+@media (max-width: 820px) {
+  .comparison-table .tis-column {
+    background: var(--color-brand-light);
+  }
 }
 
 .comparison-footer {
@@ -563,19 +757,29 @@ ol {
   align-items: stretch;
 }
 
+/* Исходник 1680x908 - широкий продуктовый кадр, импланты сидят в левой нижней
+   четверти. object-fit тут бессилен: в вертикальной рамке он показал бы кадр
+   целиком, то есть наполовину пустое белое поле. Кадрируем вручную.
+   Обе величины заданы от высоты контейнера, а горизонталь - через translateX от
+   собственной ширины картинки, поэтому кроп не зависит от aspect-ratio рамки:
+     height 146.4% = 908/620 - окно по вертикали y 288..908
+     top   -46.4%  = -(288/908) * 146.4%
+     сдвиг -17.9%  - центр группы имплантов (x=300 из 1680) выводится в центр рамки */
 .technology-visual {
-  position: relative;
-  min-height: 620px;
+  align-self: start;
+  aspect-ratio: 5 / 6;
   margin: 0;
-  overflow: hidden;
-  border-radius: 42% var(--radius-card) 42% var(--radius-card) / 32% var(--radius-card) 38% var(--radius-card);
-  background: #dfeceb;
+  --frame-bg: #ffffff;
 }
 
-.technology-visual img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.technology-visual > img {
+  position: absolute;
+  top: -46.4%;
+  left: 50%;
+  width: auto;
+  height: 146.4%;
+  max-width: none;
+  transform: translateX(-17.9%);
 }
 
 .technology-cards {
@@ -602,11 +806,70 @@ ol {
   background: linear-gradient(145deg, #ffffff, #e9f3f2);
 }
 
-.info-card:hover,
-.condition-card:hover,
-.guarantee-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-card);
+/* Раньше все три типа карточек делили один и тот же подъём на 4px - это и есть
+   то, что читается как шаблон. Теперь у каждой секции свой отклик, а сам подъём
+   стал сдержаннее. @media (hover: hover) убирает залипание состояния на тач-
+   устройствах, :focus-within даёт то же поведение с клавиатуры. */
+@media (hover: hover) and (pointer: fine) {
+  .info-card,
+  .condition-card,
+  .guarantee-card {
+    position: relative;
+    overflow: hidden;
+    transition: transform 320ms var(--ease-out), box-shadow 320ms var(--ease-out),
+      border-color 320ms var(--ease-out);
+  }
+
+  :is(.info-card, .condition-card, .guarantee-card):is(:hover, :focus-within) {
+    transform: translateY(-2px);
+    border-color: rgba(6, 89, 95, 0.3);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Технология: по низу карточки прочерчивается линия. */
+  .info-card::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--color-brand), rgba(6, 89, 95, 0));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 460ms var(--ease-out);
+  }
+
+  .info-card:is(:hover, :focus-within)::after {
+    transform: scaleX(1);
+  }
+
+  /* Показания: заливается порядковый номер. */
+  .condition-card:is(:hover, :focus-within) span {
+    color: var(--color-white);
+    background: var(--color-brand);
+  }
+
+  /* Гарантии: из угла наливается тон бренда. */
+  .guarantee-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    background: radial-gradient(130% 100% at 100% 0%, rgba(6, 89, 95, 0.1), transparent 62%);
+    pointer-events: none;
+    transition: opacity 380ms var(--ease-out);
+  }
+
+  .guarantee-card:is(:hover, :focus-within)::before {
+    opacity: 1;
+  }
+
+  /* Текст поднимается над градиентным слоем, иначе тот слегка притеняет буквы. */
+  .guarantee-card h3,
+  .guarantee-card p {
+    position: relative;
+  }
 }
 
 .info-card h3 {
@@ -666,28 +929,11 @@ ol {
   transform: rotate(-45deg);
 }
 
+/* Портрет пациентки: слева в кадре много пустого фона, уводим лицо вправо,
+   подальше от колонки с текстом. */
 .full-row-visual {
-  position: relative;
-  display: flex;
-  min-height: 430px;
-  padding: 22px;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  background: linear-gradient(145deg, #ffffff 0%, #f5faf9 100%);
-  box-shadow: var(--shadow-card);
-}
-
-.full-row-visual img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.doctor-section {
-  background: linear-gradient(115deg, #f2f7f6 0 48%, #ffffff 48% 100%);
+  aspect-ratio: 5 / 4;
+  --frame-pos: 62% 34%;
 }
 
 .doctor-grid {
@@ -697,18 +943,16 @@ ol {
   align-items: center;
 }
 
+/* Портрет вырезан по альфе и стоит на нижней грани рамки, поэтому здесь
+   contain, а не cover, и никакого параллакса - иначе фигура отклеится. */
 .doctor-photo {
-  position: relative;
-  min-height: 650px;
-  overflow: hidden;
-  border-radius: 46% var(--radius-card) var(--radius-card) 46% / 34% var(--radius-card) var(--radius-card) 42%;
-  background: #dbe8e7;
+  aspect-ratio: 5 / 6;
+  --frame-bg: radial-gradient(120% 90% at 50% 100%, #e2efee, #f4f9f8);
 }
 
-.doctor-photo img {
+.doctor-photo > img {
   position: absolute;
   inset: auto 0 0;
-  width: 100%;
   height: 96%;
   object-fit: contain;
   object-position: center bottom;
@@ -731,9 +975,11 @@ ol {
   margin: 34px 0 38px;
 }
 
+/* Колонка была ровно 88px, а "15 000+" в Prata 23px занимает ~85px - один знак
+   до обрезки. minmax даёт запас, tabular-nums не даёт ширине дёргаться на счёте. */
 .doctor-facts div {
   display: grid;
-  grid-template-columns: 88px 1fr;
+  grid-template-columns: minmax(96px, auto) 1fr;
   align-items: center;
   gap: 12px;
   padding-top: 16px;
@@ -744,6 +990,27 @@ ol {
   color: var(--color-brand);
   font-family: "Prata", Georgia, serif;
   font-size: 23px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Нечисловые факты ("TiS", "Лично") считать нечего - им даётся короткая осадка,
+   чтобы все четыре появлялись в одном ритме. */
+@media (prefers-reduced-motion: no-preference) {
+  .doctor-facts dt.is-static {
+    animation: fact-settle 560ms var(--ease-out) both;
+  }
+}
+
+@keyframes fact-settle {
+  from {
+    opacity: 0;
+    letter-spacing: 0.06em;
+  }
+
+  to {
+    opacity: 1;
+    letter-spacing: 0;
+  }
 }
 
 .doctor-facts dd {
@@ -756,7 +1023,6 @@ ol {
 .indications-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-auto-flow: dense;
   gap: 16px;
 }
 
@@ -769,18 +1035,25 @@ ol {
   transition: transform 200ms ease, box-shadow 200ms ease;
 }
 
-.condition-card:first-child,
-.condition-card:nth-child(6) {
+/* 7 карточек в 4 колонки: первая на два столбца даёт ровные ряды 2+1+1 и 1+1+1+1. */
+.condition-card:first-child {
   grid-column: span 2;
   background: linear-gradient(135deg, var(--color-brand-light), #ffffff);
 }
 
 .condition-card span {
-  display: block;
-  margin-bottom: 28px;
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
   color: var(--color-brand);
   font-size: 13px;
   font-weight: 800;
+  transition: color 320ms var(--ease-out), background-color 320ms var(--ease-out);
 }
 
 .condition-card h3 {
@@ -804,11 +1077,16 @@ ol {
 
 .timeline {
   position: relative;
+  --tl-cols: 5;
+  --tl-gap: 24px;
+  --tl-col: calc((100% - (var(--tl-cols) - 1) * var(--tl-gap)) / var(--tl-cols));
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(var(--tl-cols), minmax(0, 1fr));
+  gap: var(--tl-gap);
 }
 
+/* Ширина выводится из шага сетки: прежний calc(80% + 20px) был верен только при
+   gap 24px и на брейкпоинте 1120 перелетал последний кружок. */
 .timeline::before,
 .timeline::after {
   content: "";
@@ -816,17 +1094,21 @@ ol {
   z-index: 0;
   top: 23px;
   left: 23px;
-  width: calc(80% + 20px);
+  width: calc(100% - var(--tl-col));
   height: 2px;
   background: var(--color-border);
 }
 
+/* Без transition: прогресс ведётся скроллом непрерывно, и любое сглаживание
+   заставляет линию отставать от указателя. */
 .timeline::after {
-  width: calc(80% + 20px);
   background: var(--color-brand);
   transform: scaleX(var(--timeline-progress, 0));
   transform-origin: left center;
-  transition: transform 1200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html:not(.js) .timeline {
+  --timeline-progress: 1;
 }
 
 .timeline li {
@@ -846,6 +1128,26 @@ ol {
   color: var(--color-brand);
   background: var(--color-white);
   font-weight: 800;
+}
+
+/* Кружки загораются по мере того, как линия прогресса до них доходит.
+   --at - доля хода, на которой линия достигает кружка; кружок разгорается на
+   последних 11% подхода и стоит полностью залитым ровно в момент стыковки,
+   поэтому пятый успевает зажечься на progress = 1. */
+.timeline li:nth-child(1) .timeline-number { --at: 0; }
+.timeline li:nth-child(2) .timeline-number { --at: 0.25; }
+.timeline li:nth-child(3) .timeline-number { --at: 0.5; }
+.timeline li:nth-child(4) .timeline-number { --at: 0.75; }
+.timeline li:nth-child(5) .timeline-number { --at: 1; }
+
+@supports (color: color-mix(in srgb, red, blue)) {
+  .timeline-number {
+    --lit: clamp(0, (var(--timeline-progress, 0) - var(--at)) * 9 + 1, 1);
+    color: color-mix(in srgb, var(--color-white) calc(var(--lit) * 100%), var(--color-brand));
+    background: color-mix(in srgb, var(--color-brand) calc(var(--lit) * 100%), var(--color-white));
+    box-shadow: 0 0 0 calc(var(--lit) * 6px) rgba(6, 89, 95, 0.1);
+    transition: box-shadow 260ms var(--ease-out);
+  }
 }
 
 .timeline h3 {
@@ -900,13 +1202,143 @@ ol {
   margin: 0;
 }
 
-.case-before-after img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 427 / 219;
-  border-radius: 18px;
+/* Сравнение "до/после" собрано из одного склеенного исходника 854x438.
+   Замеры по пикселям: кадр "до" - x 99..340, y 120..322, центр (220, 221);
+   кадр "после" - x 379..734, y 73..370, центр (557, 222). Вертикальные центры
+   совпадают, масштаб отличается ровно в 1.47 раза, поэтому шторка сходится.
+   Каждому слою задано своё окно 4:3, вписанное внутрь скруглённых углов:
+     после - x 399..715, y 103..340   width 854/316   left -399/316   top -103/237
+     до    - x 112.5..327.5, y 140.5..301.5           /215           /161 */
+.ba-frame {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  touch-action: pan-y;
+  --frame-bg: var(--color-white);
+}
+
+.ba-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.ba-layer img {
+  position: absolute;
+  height: auto;
+  max-width: none;
+}
+
+.ba-layer--after img {
+  top: -43.46%;
+  left: -126.27%;
+  width: 270.25%;
+}
+
+.ba-layer--before img {
+  top: -87.27%;
+  left: -52.33%;
+  width: 397.21%;
+}
+
+.ba-layer--before {
+  clip-path: inset(0 calc(100% - var(--ba, 50%)) 0 0);
+}
+
+.ba-handle {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  bottom: 0;
+  left: var(--ba, 50%);
+  width: 2px;
+  margin-left: -1px;
   background: var(--color-white);
-  object-fit: contain;
+  box-shadow: 0 0 0 1px rgba(6, 89, 95, 0.22);
+  pointer-events: none;
+}
+
+.ba-handle::after {
+  content: "‹ ›";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--color-brand);
+  background: var(--color-white);
+  box-shadow: 0 8px 24px rgba(7, 43, 45, 0.26);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+/* У рамки --frame-w скруглены только верхний правый и нижний левый углы, причём
+   сильно. Подписи ставим в два оставшихся "квадратных" угла, иначе их срезает. */
+.ba-tag {
+  position: absolute;
+  z-index: 3;
+  padding: 6px 14px;
+  border-radius: 999px;
+  color: var(--color-brand-dark);
+  background: rgba(255, 255, 255, 0.86);
+  font-size: 13px;
+  font-weight: 800;
+  pointer-events: none;
+}
+
+.ba-tag--before {
+  top: 16px;
+  left: 16px;
+}
+
+.ba-tag--after {
+  right: 16px;
+  bottom: 16px;
+}
+
+/* Ползунок - нативный range во всю рамку. Он даёт перетаскивание мышью и
+   пальцем, клик в точку, стрелки, Home/End и фокус без единой строки на
+   обработку жестов, а заодно перекрывает картинки, гася чип браузера. */
+.ba-range {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: ew-resize;
+}
+
+.ba-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 56px;
+  height: 400px;
+  cursor: ew-resize;
+}
+
+.ba-range::-moz-range-thumb {
+  width: 56px;
+  height: 400px;
+  border: 0;
+  background: transparent;
+  cursor: ew-resize;
+}
+
+.ba-range:focus-visible {
+  outline: 3px solid rgba(6, 89, 95, 0.38);
+  outline-offset: 4px;
+  border-radius: inherit;
+}
+
+/* Без JS шторка остаётся на честной середине, а ползунок незачем показывать. */
+html:not(.js) .ba-range {
+  display: none;
 }
 
 .price-section {
@@ -1039,7 +1471,7 @@ ol {
 
 .guarantee-grid {
   display: grid;
-  grid-template-columns: 1.25fr 0.9fr 0.9fr 1.25fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -1047,7 +1479,7 @@ ol {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  min-height: 260px;
+  min-height: 240px;
   padding: 30px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
@@ -1062,15 +1494,18 @@ ol {
 
 .guarantee-card h3 {
   width: 100%;
-  min-height: 3.54em;
-  margin-bottom: 18px;
+  margin-bottom: 0;
   font-size: clamp(22px, 1.65vw, 28px);
   line-height: 1.18;
 }
 
+/* Описания прижаты к низу: они встают на общую базовую линию во всех четырёх
+   карточках, поэтому распорка min-height у заголовка больше не нужна. */
 .guarantee-card p {
   width: 100%;
+  margin-top: auto;
   margin-bottom: 0;
+  padding-top: 24px;
   color: #516263;
   font-size: 16px;
   line-height: 1.5;
@@ -1083,15 +1518,19 @@ ol {
   background: var(--color-background-alt);
 }
 
+/* Раньше здесь висел контурный круг фиксированных 520x520 - он не масштабировался
+   ни на одном брейкпоинте и читался как обрубок дуги. Заменён на мягкий градиентный
+   меш: всё в процентах, поэтому работает на любой ширине. */
 .final-cta::after {
   content: "";
   position: absolute;
-  top: -180px;
-  right: -110px;
-  width: 520px;
-  height: 520px;
-  border: 1px solid rgba(6, 89, 95, 0.18);
-  border-radius: 50%;
+  z-index: 0;
+  inset: -10% -6%;
+  pointer-events: none;
+  background:
+    radial-gradient(46% 62% at 88% 6%, rgba(6, 89, 95, 0.1), transparent 66%),
+    radial-gradient(38% 54% at 6% 88%, rgba(168, 131, 79, 0.08), transparent 62%),
+    radial-gradient(60% 70% at 52% 118%, rgba(6, 89, 95, 0.06), transparent 70%);
 }
 
 .final-cta-grid {
@@ -1169,20 +1608,17 @@ ol {
 }
 
 .entrance-photo {
-  min-height: 520px;
+  aspect-ratio: 16 / 11;
   margin: 0;
-  overflow: hidden;
-  border-radius: var(--radius-card) 42% var(--radius-card) 38% / var(--radius-card) 34% var(--radius-card) 42%;
-  background: var(--color-background-alt);
+  --frame-bg: var(--color-background-alt);
 }
 
-.entrance-photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
+/* Полноцветная карта была самым громким пятном на странице. Приглушаем её в
+   дуотон бренда и возвращаем цвет, как только пользователь к ней тянется.
+   grayscale обязан идти до sepia: он сначала убирает исходный тон, а sepia уже
+   подмешивает свой, который затем доворачивается в бирюзовый. */
 .map-wrap {
+  position: relative;
   height: 440px;
   margin-top: 34px;
   overflow: hidden;
@@ -1195,6 +1631,22 @@ ol {
   width: 100%;
   height: 100%;
   border: 0;
+  filter: grayscale(1) sepia(0.28) hue-rotate(150deg) saturate(0.85) brightness(1.03) contrast(0.94);
+  transition: filter 420ms var(--ease-out);
+}
+
+.map-wrap:hover iframe,
+.map-wrap:focus-within iframe {
+  filter: none;
+}
+
+.map-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: var(--frame-ring), inset 0 0 90px -40px rgba(6, 89, 95, 0.3);
+  pointer-events: none;
 }
 
 .site-footer {
@@ -1203,51 +1655,79 @@ ol {
   background: #f8faf9;
 }
 
-/* Мягкое перетекание фонов между соседними секциями. */
+/* Мягкое перетекание фонов между соседними секциями: одно правило на все,
+   каждая секция задаёт только пару цветов. */
+:is(.comparison-section,
+    .technology-section,
+    .full-row-section,
+    .doctor-section,
+    .indications-section,
+    .steps-section,
+    .results-section,
+    .price-section,
+    .guarantees-section,
+    .final-cta,
+    .contacts-section) {
+  background-image: linear-gradient(to bottom, var(--bg-from) 0 calc(100% - var(--sp-fade)), var(--bg-to) 100%);
+}
+
 .comparison-section {
-  background: linear-gradient(to bottom, var(--color-background) 0 calc(100% - 104px), var(--color-background-alt) 100%);
+  --bg-from: var(--color-background);
+  --bg-to: var(--color-background-alt);
 }
 
 .technology-section {
-  background: linear-gradient(to bottom, var(--color-background-alt) 0 calc(100% - 104px), var(--color-background) 100%);
+  --bg-from: var(--color-background-alt);
+  --bg-to: var(--color-background);
 }
 
 .full-row-section {
-  background: linear-gradient(to bottom, var(--color-background) 0 calc(100% - 104px), #f2f7f6 100%);
+  --bg-from: var(--color-background);
+  --bg-to: #f2f7f6;
 }
 
+/* Диагональ 115° - собственный фон секции врача, поверх неё ложится переход. */
 .doctor-section {
-  background:
-    linear-gradient(to bottom, transparent 0 calc(100% - 104px), var(--color-background-alt) 100%),
+  --bg-from: transparent;
+  --bg-to: var(--color-background-alt);
+  background-image:
+    linear-gradient(to bottom, var(--bg-from) 0 calc(100% - var(--sp-fade)), var(--bg-to) 100%),
     linear-gradient(115deg, #f2f7f6 0 48%, #ffffff 48% 100%);
 }
 
 .indications-section {
-  background: linear-gradient(to bottom, var(--color-background-alt) 0 calc(100% - 104px), var(--color-background) 100%);
+  --bg-from: var(--color-background-alt);
+  --bg-to: var(--color-background);
 }
 
 .steps-section {
-  background: linear-gradient(to bottom, var(--color-background) 0 calc(100% - 104px), #f7faf9 100%);
+  --bg-from: var(--color-background);
+  --bg-to: #f7faf9;
 }
 
 .results-section {
-  background: linear-gradient(to bottom, #f7faf9 0 calc(100% - 104px), var(--color-background-warm) 100%);
+  --bg-from: #f7faf9;
+  --bg-to: var(--color-background-warm);
 }
 
 .price-section {
-  background: linear-gradient(to bottom, var(--color-background-warm) 0 calc(100% - 104px), var(--color-background) 100%);
+  --bg-from: var(--color-background-warm);
+  --bg-to: var(--color-background);
 }
 
 .guarantees-section {
-  background: linear-gradient(to bottom, var(--color-background) 0 calc(100% - 104px), var(--color-background-alt) 100%);
+  --bg-from: var(--color-background);
+  --bg-to: var(--color-background-alt);
 }
 
 .final-cta {
-  background: linear-gradient(to bottom, var(--color-background-alt) 0 calc(100% - 104px), var(--color-background) 100%);
+  --bg-from: var(--color-background-alt);
+  --bg-to: var(--color-background);
 }
 
 .contacts-section {
-  background: linear-gradient(to bottom, var(--color-background) 0 calc(100% - 104px), #f8faf9 100%);
+  --bg-from: var(--color-background);
+  --bg-to: #f8faf9;
 }
 
 .footer-grid {
@@ -1299,12 +1779,14 @@ ol {
   text-decoration-color: currentColor;
 }
 
+/* Дисклеймер обязателен, но по иерархии он ниже футера, а не громче его. */
 .medical-notice {
   padding: 18px 24px;
-  color: #4a5354;
+  color: #5b6465;
   background: #edf2f1;
-  font-size: clamp(14px, 1.4vw, 20px);
+  font-size: 13px;
   font-weight: 500;
+  letter-spacing: 0.04em;
   text-align: center;
 }
 
@@ -1670,22 +2152,18 @@ ol {
     gap: 38px;
   }
 
-  .technology-visual,
-  .doctor-photo {
-    min-height: 560px;
-  }
 
   .indications-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .condition-card:first-child,
-  .condition-card:nth-child(6) {
-    grid-column: span 1;
+  /* В три колонки первая карточка занимает целый ряд: 3 + 3 + 1 оставило бы сироту. */
+  .condition-card:first-child {
+    grid-column: 1 / -1;
   }
 
   .timeline {
-    gap: 14px;
+    --tl-gap: 14px;
   }
 
   .clinical-case {
@@ -1717,6 +2195,22 @@ ol {
 @media (max-width: 820px) {
   :root {
     --header-height: 68px;
+
+    /* На узких экранах органические срезы уплощаются - иначе рамка съедает
+       заметную часть фотографии. Одно место на все шесть визуалов. */
+    --frame-l: 40% var(--radius-card) var(--radius-card) var(--radius-card) / 20% var(--radius-card) var(--radius-card) var(--radius-card);
+    --frame-r: var(--radius-card) 40% var(--radius-card) var(--radius-card) / var(--radius-card) 20% var(--radius-card) var(--radius-card);
+    --frame-w: var(--radius-card) 18% var(--radius-card) 16% / var(--radius-card) 34% var(--radius-card) 30%;
+    --frame-hero: 45% 0 0 0 / 22% 0 0 0;
+    --frame-vignette: inset 0 -50px 64px -46px rgba(6, 89, 95, 0.15);
+    --sp-fade: 72px;
+  }
+
+  /* На мобильном скролл быстрый, и параллакс читается как дрожание картинки. */
+  .organic-frame[data-parallax] > img,
+  .organic-frame[data-parallax] > picture > img {
+    animation: none;
+    transform: none;
   }
 
   body {
@@ -1724,9 +2218,6 @@ ol {
     font-size: 16px;
   }
 
-  html {
-    scroll-padding-top: 78px;
-  }
 
   .container {
     width: min(100% - 36px, var(--container));
@@ -1821,7 +2312,6 @@ ol {
   .hero-visual {
     min-height: 430px;
     margin: 0;
-    border-radius: 45% 0 0 0 / 22% 0 0 0;
   }
 
   .hero-wave {
@@ -1911,8 +2401,7 @@ ol {
   }
 
   .technology-visual {
-    min-height: 380px;
-    border-radius: 35% var(--radius-card) 35% var(--radius-card) / 24% var(--radius-card) 30% var(--radius-card);
+    aspect-ratio: 4 / 3;
   }
 
   .technology-cards {
@@ -1928,7 +2417,7 @@ ol {
   }
 
   .full-row-visual {
-    min-height: 320px;
+    aspect-ratio: 4 / 3;
   }
 
   .doctor-section {
@@ -1936,7 +2425,7 @@ ol {
   }
 
   .doctor-photo {
-    min-height: 470px;
+    aspect-ratio: 4 / 5;
   }
 
   .doctor-facts {
@@ -1944,7 +2433,7 @@ ol {
   }
 
   .doctor-facts div {
-    grid-template-columns: 90px 1fr;
+    grid-template-columns: minmax(96px, auto) 1fr;
   }
 
   .doctor-copy .button {
@@ -1981,7 +2470,6 @@ ol {
     height: calc(100% - 46px);
     transform: scaleY(var(--timeline-progress, 0));
     transform-origin: center top;
-    transition: transform 1200ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .timeline li {
@@ -2041,11 +2529,11 @@ ol {
   }
 
   .guarantee-card {
-    min-height: 220px;
+    min-height: 0;
   }
 
-  .guarantee-card h3 {
-    min-height: auto;
+  .guarantee-card p {
+    padding-top: 18px;
   }
 
   .final-cta {
@@ -2057,7 +2545,7 @@ ol {
   }
 
   .entrance-photo {
-    min-height: 360px;
+    aspect-ratio: 3 / 2;
   }
 
   .contacts-info address p {
