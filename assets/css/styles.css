@@ -2599,6 +2599,19 @@ html:not(.js) .ba-range {
     background: var(--color-brand);
     box-shadow: 0 12px 34px rgba(6, 89, 95, 0.3);
     font-weight: 800;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(calc(100% + env(safe-area-inset-bottom)));
+    transition: visibility 0s linear 180ms, opacity 180ms ease, transform 180ms ease;
+  }
+
+  .mobile-sticky-cta.is-visible {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+    transition-delay: 0s;
   }
 
   .modal {

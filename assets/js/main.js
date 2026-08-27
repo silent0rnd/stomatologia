@@ -287,6 +287,15 @@ function watchScroll(task) {
   task();
 }
 
+const hero = document.querySelector(".hero");
+const mobileStickyCta = document.querySelector(".mobile-sticky-cta");
+
+if (hero && mobileStickyCta) {
+  watchScroll(() => {
+    mobileStickyCta.classList.toggle("is-visible", hero.getBoundingClientRect().bottom <= window.innerHeight);
+  });
+}
+
 /* Подсветка текущего пункта меню. Переиспользует подчёркивание из :hover. */
 if ("IntersectionObserver" in window) {
   const navLinks = new Map(
