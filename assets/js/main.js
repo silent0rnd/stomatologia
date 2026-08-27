@@ -309,7 +309,10 @@ if ("IntersectionObserver" in window) {
     const navObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          navLinks.get(entry.target.id)?.toggleAttribute("data-current", entry.isIntersecting);
+          if (!entry.isIntersecting) return;
+
+          navLinks.forEach((link) => link.removeAttribute("data-current"));
+          navLinks.get(entry.target.id)?.setAttribute("data-current", "");
         });
       },
       { rootMargin: "-45% 0px -50% 0px" }
@@ -403,6 +406,11 @@ if (compare) {
   const frame = compare.querySelector(".ba-frame");
   const syncCompare = () => {
     frame.style.setProperty("--ba", `${range.value}%`);
+    frame.dataset.baState = range.value === range.min
+      ? "after-only"
+      : range.value === range.max
+        ? "before-only"
+        : "split";
     range.setAttribute("aria-valuetext", `Показано ${range.value}% снимка до лечения`);
   };
   range.addEventListener("input", syncCompare);

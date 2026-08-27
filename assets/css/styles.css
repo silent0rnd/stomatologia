@@ -746,6 +746,29 @@ ol {
   .comparison-table .tis-column {
     background: var(--color-brand-light);
   }
+
+  .comparison-table td {
+    position: relative;
+    padding-right: 28px;
+  }
+
+  .comparison-table tbody .tis-column::after,
+  .comparison-table tbody td:not(.tis-column)::after {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-weight: 800;
+  }
+
+  .comparison-table tbody .tis-column::after {
+    content: "✓";
+    color: var(--color-brand);
+  }
+
+  .comparison-table tbody td:not(.tis-column)::after {
+    content: "—";
+    color: #9aa6a6;
+  }
 }
 
 .comparison-footer {
@@ -1044,7 +1067,6 @@ ol {
 
 /* 7 карточек в 4 колонки: первая на два столбца даёт ровные ряды 2+1+1 и 1+1+1+1. */
 .condition-card:first-child {
-  grid-column: span 2;
   background: linear-gradient(135deg, var(--color-brand-light), #ffffff);
 }
 
@@ -1304,6 +1326,12 @@ html:not(.js) .timeline {
 .ba-tag--after {
   right: 16px;
   bottom: 16px;
+}
+
+/* В крайнем положении оставляем подпись только видимого снимка. */
+.ba-frame[data-ba-state="after-only"] .ba-tag--before,
+.ba-frame[data-ba-state="before-only"] .ba-tag--after {
+  visibility: hidden;
 }
 
 /* Ползунок - нативный range во всю рамку. Он даёт перетаскивание мышью и
@@ -2028,11 +2056,23 @@ html:not(.js) .ba-range {
   .mobile-phone {
     min-height: 44px;
     align-items: center;
+    gap: 6px;
     margin-left: auto;
     color: var(--color-brand-dark);
     font-size: 14px;
     font-weight: 800;
     text-decoration: none;
+  }
+
+  .mobile-phone svg {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8;
   }
 
   .menu-toggle {
@@ -2165,11 +2205,6 @@ html:not(.js) .ba-range {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  /* В три колонки первая карточка занимает целый ряд: 3 + 3 + 1 оставило бы сироту. */
-  .condition-card:first-child {
-    grid-column: 1 / -1;
-  }
-
   .timeline {
     --tl-gap: 14px;
   }
@@ -2259,11 +2294,6 @@ html:not(.js) .ba-range {
   }
 
   .mobile-phone {
-    font-size: 0;
-  }
-
-  .mobile-phone::before {
-    content: "Телефон";
     font-size: 13px;
   }
 
@@ -2663,20 +2693,15 @@ html:not(.js) .ba-range {
     gap: 8px;
   }
 
-  .mobile-phone::before {
-    content: "";
-  }
-
   .mobile-phone {
     width: 44px;
     border: 1px solid var(--color-border);
     border-radius: 12px;
+    justify-content: center;
   }
 
-  .mobile-phone::after {
-    content: "+7";
-    margin: auto;
-    font-size: 13px;
+  .mobile-phone span {
+    display: none;
   }
 
   .hero-content {
