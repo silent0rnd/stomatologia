@@ -307,6 +307,10 @@ ol {
   height: 100%;
 }
 
+.organic-frame > picture {
+  display: block;
+}
+
 .organic-frame > img,
 .organic-frame > picture > img {
   object-fit: var(--frame-fit, cover);
@@ -2311,7 +2315,7 @@ html:not(.js) .ba-range {
   }
 
   .hero-visual {
-    min-height: 430px;
+    height: 430px;
     margin: 0;
   }
 
